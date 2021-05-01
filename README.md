@@ -9,6 +9,7 @@
     - [Auxiliary tasks](#auxiliary-tasks)
 - [Architectures](#architectures)
   - [Deep Residual Learning for Image Recognition (ResNet)](#deep-residual-learning-for-image-recognition-resnet)
+  - [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](#efficientnet-rethinking-model-scaling-for-convolutional-neural-networks)
 
 # Multi-Task Learning
 
@@ -86,12 +87,43 @@ for Semantic Classification and Information Retrieval](https://www.aclweb.org/an
 
 Very deep models are beneficial, but vanishing/exploding gradients is an issue when training them and performance start degrading.  
 ResNet solves this issue by adding residual blocks to training:
+
 <p align="center">
 <img src="images/resnet_block.png" alt="Residual block" width="50%"/>
 </p>
-Consider x to be the input to a block (a few stack layers), and H(x) as the mapping to be fit by this block. Define F(x) := H(x) - x. We get H(x) = F(x) + x.  
-As seen in the image above, the idea of a residual block is to pass x directly to the end of the block, let the block learn F(x) and simply add F(x) + x to get H(x).  
+
+Consider x to be the input to a block (a few stack layers), and H(x) as the mapping to be fit by this block. Define $F(x) := H(x) - x => H(x) = F(x) + x$.  
+As seen in the image above, the idea of a residual block is to pass x directly to the end of the block, let the block learn $F(x)$ and simply add $F(x) + x$ to get $H(x)$.  
 The 2 reasons I got why this works are:  
 
 - When the net is very deep, you want to make it easy for it to use the identity mapping, kind of like "skip this layer".
 - The gradient flows directly through the identity mapping that skips each residual block, which combats the vanishing gradient issue.
+
+## EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks
+
+- Mingxing Tan, Quoc V. Le,
+- [paper](https://arxiv.org/pdf/1905.11946.pdf)
+- [blogpost](https://medium.com/@nainaakash012/efficientnet-rethinking-model-scaling-for-convolutional-neural-networks-92941c5bfb95)
+
+EfficientNet coordinates the scaling of width, depth and resolution of a net to increase performance efficiently.
+Formally it tries to solve this optimization problem:
+
+<p align="center">
+<img src="images/efficient_net_optimization_problem.PNG" alt="EfficientNet Optimization Problem" width="50%"/>
+</p>
+
+where $d, w, r$ are the coefficients for scaling network depth, width, and resolution; $F_i$, $L_i$, $H_i$, $W_i$, $C_i$ are predefined parameters in a baseline network (for example ResNet).  
+The way they did it is by using a compound coefficient $\theta$ with these constraints:
+
+<p align="center">
+<img src="images/efficient_net_coefficients.png" alt="EfficientNet Coefficients" width="30%"/>
+</p>
+
+The reason width and resolution are squared is because increasing them times x will increase FLOPS times $x^2$, while increasing the depth times x will increase FLOPS times x.  
+The way to find $\theta$, $\alpha$, $\beta$, and $\gamma$ is with these 2 steps:
+
+- Fix $\theta = 1$, do a grid search for $\alpha$, $\beta$, and $\gamma$. This will give us a baseline net.
+- Fix $\alpha$, $\beta$, and $\gamma$, and scale $\theta$ as much as you can/want.
+
+Conclusion: This is probably one of the better ways we have right now to decide on an architecture.  
+Note: We can actually experiment with different resolutions since we use AOTF.
