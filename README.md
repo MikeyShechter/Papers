@@ -7,6 +7,8 @@
     - [Reasons why MTL works](#reasons-why-mtl-works)
     - [Works in MTL for Deep Learning](#works-in-mtl-for-deep-learning)
     - [Auxiliary tasks](#auxiliary-tasks)
+- [Architectures](#architectures)
+  - [Deep Residual Learning for Image Recognition (ResNet)](#deep-residual-learning-for-image-recognition-resnet)
 
 # Multi-Task Learning
 
@@ -42,7 +44,7 @@ Multi-task learning is when you optimize multiple tasks in one model.
 - [Deep Relationship Networks](https://arxiv.org/abs/1506.02117) - Adding prior to the fully connected layers in the heads. **I don't know what this means exactly, need to read the paper**.
 - [Fully Adaptive Feature Sharing](https://arxiv.org/abs/1611.05377) - Starting from a network with no split to heads, and dynamically widen it greedily during training.
   <p align="center">
-  <img src="images/fully_adaptive_feature_sharing.png" alt="Train loss" width="95%"/>
+  <img src="images/fully_adaptive_feature_sharing.png" alt="Adaptive feature sharing" width="95%"/>
   </p>
 - [Cross-stitch Networks](https://ieeexplore.ieee.org/document/7780802) - Soft parameter sharing. Instead of normal regularization over the parameters between different backbones, they use a "cross-stitch" unit which learns in what way to share the parameters between tasks.
 - [Low Supervision](https://www.aclweb.org/anthology/P16-2038/) - Lower level tasks are supervised at lower layers. NLP related, but might be interesting.
@@ -74,3 +76,22 @@ for Semantic Classification and Information Retrieval](https://www.aclweb.org/an
 - Predicting the future - In training we have information about future frames. Since in real time we don't have that information, we can't use it as input. But we can predict it in training as an auxiliary task.
 - Representation learning - Learn a representation of the input data that is not necessarily closely related to the tasks we want to learn themselves. Instead learn a more general representation. For example the task in [SimCLR](https://arxiv.org/pdf/2002.05709.pdf) is to tell if 2 augmentation came from the same original image, or from 2 different images.
 
+# Architectures
+
+## Deep Residual Learning for Image Recognition (ResNet)
+
+- Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun.
+- [paper](https://arxiv.org/pdf/1512.03385.pdf)
+- [blogpost](https://towardsdatascience.com/understanding-and-visualizing-resnets-442284831be8)
+
+Very deep models are beneficial, but vanishing/exploding gradients is an issue when training them and performance start degrading.  
+ResNet solves this issue by adding residual blocks to training:
+<p align="center">
+<img src="images/resnet_block.png" alt="Residual block" width="50%"/>
+</p>
+Consider x to be the input to a block (a few stack layers), and H(x) as the mapping to be fit by this block. Define F(x) := H(x) - x. We get H(x) = F(x) + x.  
+As seen in the image above, the idea of a residual block is to pass x directly to the end of the block, let the block learn F(x) and simply add F(x) + x to get H(x).  
+The 2 reasons I got why this works are:  
+
+- When the net is very deep, you want to make it easy for it to use the identity mapping, kind of like "skip this layer".
+- The gradient flows directly through the identity mapping that skips each residual block, which combats the vanishing gradient issue.
