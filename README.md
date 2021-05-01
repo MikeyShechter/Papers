@@ -15,6 +15,7 @@
 - Sebastian Ruder
 - [blog-post](https://ruder.io/multi-task/)
 - [paper](https://arxiv.org/pdf/1706.05098.pdf)
+
 This blog-post is an overview of multi-task learning papers.  
 I will link to the original papers, and when/if I read them, I will summarize them here as well.
 
@@ -68,4 +69,8 @@ for Semantic Classification and Information Retrieval](https://www.aclweb.org/an
   For example:
   - Learn Intersection over union to help with learning approval
   - Learn how much of the vehicle is out of image/occluded when learning OOI/occlusion (We don't have the correct labels for occlusion, but we do for out of warp).
+- Predicting inputs - Instead of using our features as inputs, predict them. In images it's kind of like cutout in self supervised.  
+  Example paper: [Promoting Poor Features to Supervisors: Some Inputs Work Better as Outputs](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.48.1482&rep=rep1&type=pdf)
+- Predicting the future - In training we have information about future frames. Since in real time we don't have that information, we can't use it as input. But we can predict it in training as an auxiliary task.
+- Representation learning - Learn a representation of the input data that is not necessarily closely related to the tasks we want to learn themselves. Instead learn a more general representation. For example the task in [SimCLR](https://arxiv.org/pdf/2002.05709.pdf) is to tell if 2 augmentation came from the same original image, or from 2 different images.
 
