@@ -7,6 +7,7 @@
     - [Reasons why MTL works](#reasons-why-mtl-works)
     - [Works in MTL for Deep Learning](#works-in-mtl-for-deep-learning)
     - [Auxiliary tasks](#auxiliary-tasks)
+  - [Fully-adaptive Feature Sharing in Multi-Task Networks with Applications in Person Attribute Classification](#fully-adaptive-feature-sharing-in-multi-task-networks-with-applications-in-person-attribute-classification)
 - [Architectures](#architectures)
   - [Deep Residual Learning for Image Recognition (ResNet)](#deep-residual-learning-for-image-recognition-resnet)
   - [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](#efficientnet-rethinking-model-scaling-for-convolutional-neural-networks)
@@ -76,6 +77,13 @@ for Semantic Classification and Information Retrieval](https://www.aclweb.org/an
   Example paper: [Promoting Poor Features to Supervisors: Some Inputs Work Better as Outputs](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.48.1482&rep=rep1&type=pdf)
 - Predicting the future - In training we have information about future frames. Since in real time we don't have that information, we can't use it as input. But we can predict it in training as an auxiliary task.
 - Representation learning - Learn a representation of the input data that is not necessarily closely related to the tasks we want to learn themselves. Instead learn a more general representation. For example the task in [SimCLR](https://arxiv.org/pdf/2002.05709.pdf) is to tell if 2 augmentation came from the same original image, or from 2 different images.
+
+## Fully-adaptive Feature Sharing in Multi-Task Networks with Applications in Person Attribute Classification
+
+- Yongxi Lu, Abhishek Kumar, Shuangfei Zhai, Yu Cheng, Tara Javidi, Rogerio Feris
+- [paper](https://arxiv.org/abs/1611.05377)
+
+One of the issues with MTL is knowing which tasks to share and how much. This paper suggests an automation for deciding on the MTL architecture. 
 
 # Architectures
 
