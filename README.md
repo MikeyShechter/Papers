@@ -1,5 +1,4 @@
 # Table of Contents
-
 - [Table of Contents](#table-of-contents)
 - [Multi-Task Learning](#multi-task-learning)
   - [An Overview of Multi-Task Learning in Deep Neural Networks (05.2017)](#an-overview-of-multi-task-learning-in-deep-neural-networks-052017)
@@ -11,6 +10,26 @@
 - [Architectures](#architectures)
   - [Deep Residual Learning for Image Recognition (ResNet)](#deep-residual-learning-for-image-recognition-resnet)
   - [EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks](#efficientnet-rethinking-model-scaling-for-convolutional-neural-networks)
+- [Optimization](#optimization)
+  - [Contrastive learning with hard negative samples](#contrastive-learning-with-hard-negative-samples)
+    - [Main Points](#main-points)
+    - [Notations](#notations)
+    - [More details](#more-details)
+  - [COCO-DR: Combating Distribution Shifts in Zero-Shot Dense Retrieval with Contrastive and Distributionally Robust Learning](#coco-dr-combating-distribution-shifts-in-zero-shot-dense-retrieval-with-contrastive-and-distributionally-robust-learning)
+- [Data Pruning](#data-pruning)
+  - [DataComp: In search of the next generation of multimodal datasets](#datacomp-in-search-of-the-next-generation-of-multimodal-datasets)
+    - [Main points](#main-points-1)
+    - [Details](#details)
+    - [Filtering Methods](#filtering-methods)
+    - [Filtering methods I want to try](#filtering-methods-i-want-to-try)
+    - [Metadata](#metadata)
+  - [Beyond neural scaling laws: beating power law scaling via data pruning](#beyond-neural-scaling-laws-beating-power-law-scaling-via-data-pruning)
+    - [Main Idea](#main-idea)
+    - [Main graph to understand:](#main-graph-to-understand)
+    - [Pruning small vs large data sets](#pruning-small-vs-large-data-sets)
+    - [Effect on transfer learning](#effect-on-transfer-learning)
+    - [Their pruning algorithm](#their-pruning-algorithm)
+
 
 # Multi-Task Learning
 
@@ -135,3 +154,266 @@ The way to find $\theta$, $\alpha$, $\beta$, and $\gamma$ is with these 2 steps:
 
 Conclusion: This is probably one of the better ways we have right now to decide on an architecture.  
 Note: We can actually experiment with different resolutions since we use AOTF.
+
+# Optimization
+
+## Contrastive learning with hard negative samples
+
+- Joshua Robinson, Ching-Yao Chuang, Suvrit Sra, Stefanie Jegelka
+- [paper](https://arxiv.org/pdf/2010.04592.pdf)
+- [5 minute lecture](https://crossminds.ai/video/contrastive-learning-with-hard-negative-samples-60c3d1a86af07cfaf7325cce/)
+
+### Main Points
+
+- In contrastive learning we want to sample *good* negative samples.
+- They develop an unsupervised sampling method for selecting hard negative samples.
+- The idea is to sample negative samples that their representation is currently very similar to the anchor representation and their label is different from the anchor.
+- They use an importance sampling technique that enables them to sample the usual way (at random) while TODO
+
+### Notations
+
+Data points:
+
+- $x$: data sample (anchor)
+- $x^+$: positive pair of x
+- $x^-$: negative pair of x
+
+Basics:
+
+- $t$: temperature scaling hyperparameter
+- $\mathbb{S}^{d-1}/t$: hypersphere in $\mathbb{R}^d$ of radius $1/t$
+- embedding $f: \mathcal{X}\rightarrow \mathbb{S}^{d-1}/t$
+- $\mathcal{C}$: set of classes.
+  - More in depth: set of discrete latent classes that represent semantic context. $x, x^+$ have the same latent class.
+- $h: \mathcal{X}\rightarrow \mathcal{C}$: The true labels hypothesis
+
+
+Distributions:
+- $\rho(c)$: Distribution over latent classes.
+- $p_{x, c}(x, c)=p(x|c)\rho(c)$
+- $p=p(x)$
+- $\tau^+=\rho(c)=\frac{1}{|\mathcal{C}|}$: assuming uniform distribution of classes
+- $\tau^- = 1 - \tau^+$: The probability of another class
+- $x \sim x' \Rightarrow h(x)=h(x')$
+- $p_x^+(x')=p(x'|h(x')=h(x))$: The distribution over points with same label as $x$
+- $p_x^-(x')=p(x'|h(x') \neq h(x))$: The distribution over points with different label from $x$
+- $x \sim p$: x sampled from p
+- $q$: negative sampling distribution TODO
+- $\beta$: Concentration parameter that controls the degree by which $q_{\beta}$ (below) up-weights points $x'$ that have large inner product to the anchor x
+- $q_{\beta, x}(x')=q_{\beta}(x') = e^{\beta f(x)^Tf(x')}p(x')$: weighted sampling from $p$ based on how much the sample $x'$ is close to $x$
+- $q_b^-(x^-) = q_b(x^-|h(x) \neq h(x^-))$: weighted sampling like $q_{\beta, x}(x^-)$ conditioned that $h(x) \neq h(x^-)$
+- $q_b^+(x^-) = q_b(x^-|h(x) = h(x^-))$: weighted sampling like $q_{\beta, x}(x^-)$ conditioned that $h(x) = h(x^-)$
+
+
+NCE (noise contrastive estimation):
+
+- $N$: number of negative samples
+- $Q$:  Weighting parameter
+- $NCE(x)=$
+
+<p align="center">
+<img src="images/NCE.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+### More details
+
+Without labels you can't sample from a distribution $q=q_b^-(x^-)$ exactly. They suggest $q$ that satisfies this approximately.
+
+$q_{\beta}(x^-) = q_{\beta}^+(x^-)\tau^+ + q_{\beta}^-(x^-)\tau^-$. Rearranging:  
+$q_{\beta}^-(x^-) = q_{\beta}(x^-) - q_{\beta}^+(x^-)\tau^+/\tau^-$.  
+This way we have $q_{\beta}^-(x^-)$ in terms of two distributions that are tractable:
+
+- We have samples from $q_\beta^+$ because we have samples from $p$.
+- We can approxiamte samples from $p^+$ (TODO how?: *"using a set of semantics-preserving transformations, as is typical in contrastive learning methods"*)
+
+How to sample from $q_\beta^+$:
+
+- Using rejection sampling (TODO what is that?). The problem is: *"rejection sampling involves an algorithmic complication since the procedure for sampling
+batches must be modified"*
+- Use importance sampling
+
+$NCE(x)$ can be view as finite negative sample approximation of:
+<p align="center">
+<img src="images/objective_3.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+We want $q=q_\beta^-$ so let's insert our rearrangement of $q_\beta^-$:
+
+<p align="center">
+<img src="images/objective_4.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+This means we can approximate *expectations* over $q_\beta, q_\beta^+$ rather than explicitly sampling.  
+We do this by using Monte-Carlo importance sampling using samples from $p, p^+$ (TODO how to sample from $p^+$?)
+
+<p align="center">
+<img src="images/monte_carlo_importance.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+Where $Z_\beta, Z_\beta^+$ are the partition functions (TODO check what are they).  
+We can empirically approximate $p, p^+, Z_\beta, Z_\beta^+$
+
+<p align="center">
+<img src="images/estimate_p.jpg" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+<p align="center">
+<img src="images/estimate_z.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+Where $\delta_w$ denotes the Dirac delta function centered at $w$  
+
+TODO continue from section 4 in the paper
+
+## COCO-DR: Combating Distribution Shifts in Zero-Shot Dense Retrieval with Contrastive and Distributionally Robust Learning
+
+- Yue Yu, Chenyan Xiong, Si Sun, Chao Zhang, Arnold Overwijk
+- [paper](https://arxiv.org/pdf/2210.15212.pdf)
+
+They want to improve zero shot dense retrieval under distribution shifts.  
+First they show correlation between the similarity of the corpus/queries (in the target compared to the original distribution) to performance.
+
+They improve zero-shot DR using 2 methods:
+
+1. Continuous Contrastive Pretraining - tackling corpus distribution shift:  
+   After getting access to the target distribution corpus (which is needed in order to index anything), continuously "pre-train" on the coprura using contrastive learning. A positive pair is 2 sequences from the same document, and negative samples are from the other documents.
+2. Distributionally Robust Optimization - tackling query distribution shifts: They use implicit DRO (iDRO)
+
+iDRO:  
+
+First cluster source queries using K-means.  
+Define the iDRO loss:
+
+<p align="center">
+<img src="images/LiDRO.png" alt="EfficientNet Coefficients" width="60%"/>
+</p>
+
+where $\alpha, \omega$ are per cluster weighting parameters.  
+$\alpha_i$ up-weights clusters with higher training loss using the hyperparameter $beta$.  
+$\omega$ is a learnable parameter that maximize the loss decreases on all clusters. Using some math and KL regularization, they get the following formula for $\omega$:
+
+<p align="center">
+<img src="images/omega_idro.png" alt="EfficientNet Coefficients" width="60%"/>
+</p>
+
+Results:  
+iDRO specifically improves BEIR performance by 1.1%.
+
+# Data Pruning
+
+## DataComp: In search of the next generation of multimodal datasets
+
+- Yair Carmon and 30+ more
+- [paper](https://arxiv.org/pdf/2304.14108.pdf)
+- [Website](https://www.datacomp.ai/)
+- [github](https://github.com/mlfoundations/datacomp)
+
+### Main points
+
+- A participatory benchmark where the training code, model, computational budget are fixed and you imporove it by proposing new training sets
+- They provide the **CommonPool** dataset of 12.8B image-text pairs from Common Crawl.
+- They provide many baseline experiments on how to build/filter the dataset and how these filtering algorithms perform on different data/model sizes
+
+### Details
+
+- 4 data scales:
+
+  - **XLarge**: 12.8B
+  - **Large**: 1.28B
+  - **Medium**: 128M
+  - **Small**: 12.8M
+- 38 downstream tasks
+- standardized CLIP training code
+- Filtering Baselines
+- DataComp-1B - *1.4B samples dataset created using a simple filtering algorithm applied to the 12.8B candidate pool*
+
+### Filtering Methods
+
+- No filtering
+- Random filtering
+- Basic filtering:
+
+  - Language: only English
+  - Caption length: over 2 words and 5 characters
+  - Image size: $AspectRatio < 3$ and $min(height, width) > 200$
+  - Language + caption length
+  - Language + caption length + image size
+
+- CLIP score: Clip similarity score > threshold for different thresholds
+- CLIP score + Language
+- Text based filtering: Select sampes with text overlapping ImageNet (21K and 1K) class names
+- Text-based sampling: Not clear.
+- Image based filtering. Do these steps:
+
+  1) Language + Caption length
+  2) Cluster image embeddings (ViT-L/14) into 100K groups using Faiss
+  3) Find the nearset neighbor cluster center for every ImageNet (21K, 1K) training example
+  4) Keep examples whose corresponding cluster center is a nearest neighbor to at least one ImageNet image.
+
+- Image based sampling: Do:
+
+  1) Use the same logic as in filtering, but this time have a count $s_i$ for each cluster of the number of ImageNet images closest to it.
+  2) Sample a cluster proportional to $s_i$
+  3) Sample an example uniformly from this cluster
+
+- ImageNet distance filtering: For each sample, get a distance to the closest ImageNet image. Then keep % with the lowest distance.
+
+### Filtering methods I want to try
+
+- Filter the XL dataset using CLIP with a very high threshold and use it in the smaller scale competitions of BYOD
+- Filter non-monotonic data points
+- 
+
+### Metadata
+
+- image url
+- alt-text caption
+- orignial image width, height
+- CLIP ViT-B/32 and ViT-L/14 image and text features
+- CLIP ViT-B/32 and ViT-L/14 image and text similarity score
+
+## Beyond neural scaling laws: beating power law scaling via data pruning
+
+- Ben Sorscher, Robert Geirhos, Shashank Shekhar, Surya Ganguli, Ari S. Morcos
+- [paper](https://arxiv.org/pdf/2206.14486.pdf)
+- [10 minute explanation](https://www.youtube.com/watch?v=joZaCw5PxYs)  
+- [Metric scores git](https://github.com/rgeirhos/dataset-pruning-metrics)
+
+### Main Idea
+The authors show theoretically and empirically that when you have a large amount of data, a smart pruning method can break neural scaling law. Meaning that instead of the usual scaling law where the error falls off as a power of the training set and model size, it falls exponentially fast.  
+They then compare existing pruning methods empirically and suggest an unsupervised pruning method based on their theory that works very well compared to other unsupervised methods.  
+
+### Main graph to understand:
+<p align="center">
+<img src="images/beyond_scaling_laws.png" alt="EfficientNet Coefficients" width="70%"/>
+</p>
+
+- x axis is scaling the total dataset size.
+- y axis is the test error.
+- Each line represents % of data kept. For example 60% means that 40% of the data was pruned in an optimal way.
+- Looking at the black like (100% data kept) we can see the usual power that looks like a linear line in a double logarithmic scale.
+- The other lines show us that the more data you have, the more agressive pruning you can do. And when you don't have enough data it might be better not to prune at all.  
+
+### Pruning small vs large data sets
+Another thing the show (theoritically and empirically) is that small data sets benefit from pruning hard samples while large data sets benefit from pruning easy samples as shown in the figure below. It makes sense as the authers say:  
+<i>"Intuitively, in the limited data regime, it is challenging to model outliers since the basics are
+not adequately captured; hence, it is more important to keep easy examples so that the model can get
+to moderate error. However, with a larger dataset, the easy examples can be learned without difficulty,
+making modeling outliers the fundamental challenge."</i>
+
+<p align="center">
+<img src="images/easy_vs_hard_samples_pruning.png" alt="EfficientNet Coefficients" width="70%"/>
+</p>
+
+### Effect on transfer learning
+- Pruning fine tune data: <i>"fine-tuning on only 10% of CIFAR-10 can match
+or exceed performance obtained by fine tuning on all of CIFAR-10"</i>
+- Pruning pre-train data: <i>"pre-training on as little as 50% of ImageNet can match or exceed CIFAR-10
+performance obtained by pre-training on all of ImageNet"</i>
+
+### Their pruning algorithm
+
+- Take a pretrained self-supervised model trained on the dataset
+- Perform k-means clustering in the embedding space
+- Define the difficulty of each data point by the distance to its nearest cluster centroid
+- Keep some % (on imagenet 80% performs well) most difficult samples samples
