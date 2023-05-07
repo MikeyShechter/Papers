@@ -1,4 +1,5 @@
 # Table of Contents
+
 - [Table of Contents](#table-of-contents)
 - [Multi-Task Learning](#multi-task-learning)
   - [An Overview of Multi-Task Learning in Deep Neural Networks (05.2017)](#an-overview-of-multi-task-learning-in-deep-neural-networks-052017)
@@ -25,7 +26,7 @@
     - [Metadata](#metadata)
   - [Beyond neural scaling laws: beating power law scaling via data pruning](#beyond-neural-scaling-laws-beating-power-law-scaling-via-data-pruning)
     - [Main Idea](#main-idea)
-    - [Main graph to understand:](#main-graph-to-understand)
+    - [Main graph to understand](#main-graph-to-understand)
     - [Pruning small vs large data sets](#pruning-small-vs-large-data-sets)
     - [Effect on transfer learning](#effect-on-transfer-learning)
     - [Their pruning algorithm](#their-pruning-algorithm)
@@ -80,7 +81,7 @@ Multi-task learning is when you optimize multiple tasks in one model.
 Tasks that you don't need to learn, but learning them might improve performance of the tasks that you do need to learn.
 
 - Related task - Self explanatory.  
-  Examples: 
+  Examples:
   - [Representation Learning Using Multi-Task Deep Neural Networks
 for Semantic Classification and Information Retrieval](https://www.aclweb.org/anthology/N15-1092/)
   - [Facial Landmark Detection by Deep Multi-task Learning](https://link.springer.com/content/pdf/10.1007/978-3-319-10599-4_7.pdf)
@@ -189,8 +190,8 @@ Basics:
   - More in depth: set of discrete latent classes that represent semantic context. $x, x^+$ have the same latent class.
 - $h: \mathcal{X}\rightarrow \mathcal{C}$: The true labels hypothesis
 
-
 Distributions:
+
 - $\rho(c)$: Distribution over latent classes.
 - $p_{x, c}(x, c)=p(x|c)\rho(c)$
 - $p=p(x)$
@@ -388,10 +389,12 @@ Combining the 2 approaches sounds interesting (take 1 from "Remove mislabeled po
 - [Metric scores git](https://github.com/rgeirhos/dataset-pruning-metrics)
 
 ### Main Idea
+
 The authors show theoretically and empirically that when you have a large amount of data, a smart pruning method can break neural scaling law. Meaning that instead of the usual scaling law where the error falls off as a power of the training set and model size, it falls exponentially fast.  
 They then compare existing pruning methods empirically and suggest an unsupervised pruning method based on their theory that works very well compared to other unsupervised methods.  
 
-### Main graph to understand:
+### Main graph to understand
+
 <p align="center">
 <img src="images/beyond_scaling_laws.png" alt="EfficientNet Coefficients" width="70%"/>
 </p>
@@ -403,21 +406,23 @@ They then compare existing pruning methods empirically and suggest an unsupervis
 - The other lines show us that the more data you have, the more agressive pruning you can do. And when you don't have enough data it might be better not to prune at all.  
 
 ### Pruning small vs large data sets
+
 Another thing the show (theoritically and empirically) is that small data sets benefit from pruning hard samples while large data sets benefit from pruning easy samples as shown in the figure below. It makes sense as the authers say:  
-<i>"Intuitively, in the limited data regime, it is challenging to model outliers since the basics are
+*"Intuitively, in the limited data regime, it is challenging to model outliers since the basics are
 not adequately captured; hence, it is more important to keep easy examples so that the model can get
 to moderate error. However, with a larger dataset, the easy examples can be learned without difficulty,
-making modeling outliers the fundamental challenge."</i>
+making modeling outliers the fundamental challenge."*
 
 <p align="center">
 <img src="images/easy_vs_hard_samples_pruning.png" alt="EfficientNet Coefficients" width="70%"/>
 </p>
 
 ### Effect on transfer learning
-- Pruning fine tune data: <i>"fine-tuning on only 10% of CIFAR-10 can match
-or exceed performance obtained by fine tuning on all of CIFAR-10"</i>
-- Pruning pre-train data: <i>"pre-training on as little as 50% of ImageNet can match or exceed CIFAR-10
-performance obtained by pre-training on all of ImageNet"</i>
+
+- Pruning fine tune data: *"fine-tuning on only 10% of CIFAR-10 can match
+or exceed performance obtained by fine tuning on all of CIFAR-10"*
+- Pruning pre-train data: *"pre-training on as little as 50% of ImageNet can match or exceed CIFAR-10
+performance obtained by pre-training on all of ImageNet"*
 
 ### Their pruning algorithm
 
