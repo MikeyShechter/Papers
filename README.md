@@ -171,7 +171,7 @@ Note: We can actually experiment with different resolutions since we use AOTF.
 - In contrastive learning we want to sample *good* negative samples.
 - They develop an unsupervised sampling method for selecting hard negative samples.
 - The idea is to sample negative samples that their representation is currently very similar to the anchor representation and their label is different from the anchor.
-- They use an importance sampling technique that enables them to sample the usual way (at random) while TODO
+- They use an importance sampling technique that enables them to sample the usual way (at random) while not adding any computational overhead.
 
 ### Notations
 
@@ -227,7 +227,7 @@ $q_{\beta}^-(x^-) = q_{\beta}(x^-) - q_{\beta}^+(x^-)\tau^+/\tau^-$.
 This way we have $q_{\beta}^-(x^-)$ in terms of two distributions that are tractable:
 
 - We have samples from $q_\beta^+$ because we have samples from $p$.
-- We can approxiamte samples from $p^+$ (TODO how?: *"using a set of semantics-preserving transformations, as is typical in contrastive learning methods"*)
+- They approxiamte samples from $p^+$ *"using a set of semantics-preserving transformations, as is typical in contrastive learning methods"* (like flipping, noising, cropping etc..)
 
 They sample from $q_\beta^+$ using importance sampling:
 
@@ -243,7 +243,7 @@ We want $q=q_\beta^-$ so let's insert our rearrangement of $q_\beta^-$:
 </p>
 
 This means we can approximate *expectations* over $q_\beta, q_\beta^+$ rather than explicitly sampling.  
-We do this by using Monte-Carlo importance sampling using samples from $p, p^+$ (TODO how to sample from $p^+$?)
+We do this by using Monte-Carlo importance sampling using samples from $p, p^+$
 
 <p align="center">
 <img src="images/monte_carlo_importance.png" alt="EfficientNet Coefficients" width="100%"/>
