@@ -29,6 +29,8 @@
     - [Pruning small vs large data sets](#pruning-small-vs-large-data-sets)
     - [Effect on transfer learning](#effect-on-transfer-learning)
     - [Their pruning algorithm](#their-pruning-algorithm)
+  - [SemDeDup: Data-efficient learning at web-scale through semantic deduplication](#semdedup-data-efficient-learning-at-web-scale-through-semantic-deduplication)
+  - [Dataset Cartography: Mapping and Diagnosing Datasets with Training Dynamics](#dataset-cartography-mapping-and-diagnosing-datasets-with-training-dynamics)
 
 
 # Multi-Task Learning
@@ -360,9 +362,19 @@ iDRO specifically improves BEIR performance by 1.1%.
 
 ### Filtering methods I want to try
 
+Remove "mislabeled" points:
+
 - Filter the XL dataset using CLIP with a very high threshold and use it in the smaller scale competitions of BYOD
-- Filter non-monotonic data points
-- 
+- [Deconstructing Distributions: A Pointwise Framework of Learning](https://arxiv.org/pdf/2202.09931.pdf): Filter non-monotonic data points.
+- [Characterizing Datapoints via Second-Split Forgetting](https://proceedings.neurips.cc/paper_files/paper/2022/file/c20447998d6c624b4b97d4466a3bfff5-Paper-Conference.pdf): Identifying "mislabeled" data points. In the context of CLIP style models, it might corelate to image and text mismatch.
+
+Remove easy/uninformative/repetitive points:
+
+- [Beyond neural scaling laws: beating power law scaling via data pruning](https://arxiv.org/pdf/2206.14486.pdf)
+- [SemDeDup: Data-efficient learning at web-scale
+through semantic deduplication](https://arxiv.org/pdf/2303.09540.pdf)
+
+Combining the 2 approaches sounds interesting (take 1 from "Remove mislabeled points" and 1 from Remove uninformative/repetitive points)
 
 ### Metadata
 
@@ -417,3 +429,68 @@ performance obtained by pre-training on all of ImageNet"</i>
 - Perform k-means clustering in the embedding space
 - Define the difficulty of each data point by the distance to its nearest cluster centroid
 - Keep some % (on imagenet 80% performs well) most difficult samples samples
+
+## SemDeDup: Data-efficient learning at web-scale through semantic deduplication
+
+- Amro Abbas, Kushal Tirumala, Dániel Simig, Surya Ganguli, Ari S. Morcos
+- [paper](https://arxiv.org/pdf/2303.09540.pdf)
+
+Cluster the images using K-means (K=50,000). Within each cluster, compute pairwise cosine similarity and set threshold to determine which pairs are considered semantic duplicates.  
+From each group of semantic duplicates, keep the 1 with the lowest cosine similarity to the cluster centroid and remove the rest.  
+They tried 3 options for choosing which points to keep and there wasn't much of difference between them
+
+1) keeping examples with low similarity to centroids
+2) keeping random examples
+3) keeping examples with high similarity to cluster centroids.
+
+Mikey: Think about leaving the sample with the "best" text (best CLIP text to image similarity/long text or something else).  
+
+Note on time complexity: Performing cosine similarity between all pairs requires $O(n^2)$ time. Using k clusters reduces the time complexity to $O(n^2/k)$.  
+
+Removing 37% using SemDeDup increases OOD performance on LAION-440M which is an already curated dataset "*LAION
+data were filtered using a pre-trained CLIP model to only retain image-text pairs with an embedding
+similarity greater than 0.28. Image-text pairs containing very short captions or small images were
+also removed. A simple de-duplication method based on the image url was also performed.*"
+
+## Dataset Cartography: Mapping and Diagnosing Datasets with Training Dynamics
+
+- Swabha Swayamdipta, Roy Schwartz, Nicholas Lourie, Yizhong Wang, Hannaneh Hajishirzi†, Noah A. Smith†, Yejin Choi
+- [paper](https://arxiv.org/pdf/2009.10795.pdf)
+- [github](https://github.com/allenai/cartography)
+
+They look at data samples across training epochs and split them into 3 catogries corresponding to 3 regions on their "data map":
+
+- instances whose true class probabilities fluctuate frequently during training (high variability), and are hence ambiguous for the model
+- easy-to-learn instances that the model predicts correctly and consistently (high confidence, low
+variability)
+- hard-to-learn instances with low confidence, low variability.
+
+Definitions:
+
+- **confidence**: mean model probability of the true label across epochs.
+- **correctness**: fraction of times the model classified the sample correctly
+- **variability**: std of the same values as in confidence.
+
+Unlike [Deconstructing Distributions](https://arxiv.org/pdf/2202.09931.pdf) these definitions are not related to the order of the epochs.
+
+<p align="center">
+<img src="images/data_map.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+Claims:  
+
+- Training on **ambiguous instances** promotes generalization to OOD test sets, with little or no effect on in-distribution (ID) performance.
+- There are a lot of **easy-to-learn** instances that are not critical for ID or OOD performance, but without any such instances, training could faild to converge
+- **hard-to-learn** instances frequently correspond to labeling errors
+- They use the confidence measure to train a linear classifier that predicts mislabels and get decent results.
+
+<p align="center">
+<img src="images/data_maps_results.png" alt="EfficientNet Coefficients" width="80%"/>
+</p>
+
+Sampling methods:
+
+- forgetting: training examples that transitioned from being classified correctly to incorrectly over the course of learning
+- AL-uncertainty: The algorithm selects unlabeled examples that it finds hardest to classify
+- AFLite: adversarial filtering algorithm which ranks instances based on their “predictability”, i.e. the ability of simple linear classifiers to predict them correctly
+
