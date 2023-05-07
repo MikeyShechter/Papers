@@ -200,7 +200,7 @@ Distributions:
 - $p_x^+(x')=p(x'|h(x')=h(x))$: The distribution over points with same label as $x$
 - $p_x^-(x')=p(x'|h(x') \neq h(x))$: The distribution over points with different label from $x$
 - $x \sim p$: x sampled from p
-- $q$: negative sampling distribution TODO
+- $q$: negative sampling distribution - this is what we want to do in a smart way
 - $\beta$: Concentration parameter that controls the degree by which $q_{\beta}$ (below) up-weights points $x'$ that have large inner product to the anchor x
 - $q_{\beta, x}(x')=q_{\beta}(x') = e^{\beta f(x)^Tf(x')}p(x')$: weighted sampling from $p$ based on how much the sample $x'$ is close to $x$
 - $q_b^-(x^-) = q_b(x^-|h(x) \neq h(x^-))$: weighted sampling like $q_{\beta, x}(x^-)$ conditioned that $h(x) \neq h(x^-)$
@@ -228,11 +228,7 @@ This way we have $q_{\beta}^-(x^-)$ in terms of two distributions that are tract
 - We have samples from $q_\beta^+$ because we have samples from $p$.
 - We can approxiamte samples from $p^+$ (TODO how?: *"using a set of semantics-preserving transformations, as is typical in contrastive learning methods"*)
 
-How to sample from $q_\beta^+$:
-
-- Using rejection sampling (TODO what is that?). The problem is: *"rejection sampling involves an algorithmic complication since the procedure for sampling
-batches must be modified"*
-- Use importance sampling
+They sample from $q_\beta^+$ using importance sampling:
 
 $NCE(x)$ can be view as finite negative sample approximation of:
 <p align="center">
