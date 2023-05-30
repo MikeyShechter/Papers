@@ -17,6 +17,11 @@
     - [Notations](#notations)
     - [More details](#more-details)
   - [COCO-DR: Combating Distribution Shifts in Zero-Shot Dense Retrieval with Contrastive and Distributionally Robust Learning](#coco-dr-combating-distribution-shifts-in-zero-shot-dense-retrieval-with-contrastive-and-distributionally-robust-learning)
+  - [Boosting Visual-Language Models by Exploiting Hard Samples](#boosting-visual-language-models-by-exploiting-hard-samples)
+  - [DoReMi: Optimizing Data Mixtures Speeds Up Language Model Pretraining](#doremi-optimizing-data-mixtures-speeds-up-language-model-pretraining)
+    - [Problem Setting](#problem-setting)
+    - [Algorithm](#algorithm)
+    - [Step 2 details](#step-2-details)
 - [Data Pruning](#data-pruning)
   - [DataComp: In search of the next generation of multimodal datasets](#datacomp-in-search-of-the-next-generation-of-multimodal-datasets)
     - [Main points](#main-points-1)
@@ -298,6 +303,53 @@ $\omega$ is a learnable parameter that maximize the loss decreases on all cluste
 Results:  
 iDRO specifically improves BEIR performance by 1.1%.
 
+## Boosting Visual-Language Models by Exploiting Hard Samples
+
+- Haonan Wang, Minbin Huang, Runhui Huang, Lanqing Hong, Hang Xu, Tianyang Hu, Xiaodan Liang, Zhenguo Li
+- [paper](https://arxiv.org/pdf/2305.05208.pdf)
+
+They suggest a way to finetune CLIP models using the same dataset that was used in pre-training. 
+
+- They choose hard negatives for each training sample and add the chosen samples to the training batch.
+- They add an additional loss on top of the usual CLIP loss which makes hard negatives relatively closer to the anchor sample. The intuition is that these samples are related to the anchor sample so they should be closer than regular negatives.
+
+**Hard pair mining**: For each anchor sample x, score all the other samples in the dataset by similarity of the images representation times the similarity of text representation. Take the top k most similar pairs.  
+
+**margin loss**: 
+<p align="center">
+<img src="images/l_margin.png" alt="EfficientNet Coefficients" width="60%"/>
+</p>
+
+Details:
+
+- Going over the whole dataset to find the most similar samples for each anchor sample is computationally expansive, so they only use a fixed size subset of the dataset for the hard negatives so it’s not as expensive but achieves similar results.
+
+Note: Personally, I am not sure that the hard negative samples are always related to the anchor in a way that we want to encourage (it did work, but maybe there is a more precise thing to do).
+
+## DoReMi: Optimizing Data Mixtures Speeds Up Language Model Pretraining
+
+- Sang Michael Xie, Hieu Pham, Xuanyi Dong, Nan Du, Hanxiao Liu, Yifeng Lu, Percy Liang, Quoc V. Le, Tengyu Ma, and Adams Wei Yu
+- [paper](https://arxiv.org/pdf/2305.10429.pdf)
+
+Algorithm figure:
+<p align="center">
+<img src="images/DoReMi_fig.png" alt="EfficientNet Coefficients" width="100%"/>
+</p>
+
+### Problem Setting
+
+We have data domains $D_1, ..., D_k$ and want to know how to best sample from them in order to train a rubust model.
+
+### Algorithm
+
+1. Train a reference model using initial sampling weights $\alpha_0$ (Start with uniform distribution). The model may be small.
+2. Train proxy model with Group DRO to obtain domain weights. More details later.
+3. Train large model with new domain weights.
+
+### Step 2 details
+
+
+
 # Data Pruning
 
 ## DataComp: In search of the next generation of multimodal datasets
@@ -461,10 +513,10 @@ also removed. A simple de-duplication method based on the image url was also per
 
 They look at data samples across training epochs and split them into 3 catogries corresponding to 3 regions on their "data map":
 
-- instances whose true class probabilities fluctuate frequently during training (high variability), and are hence ambiguous for the model
-- easy-to-learn instances that the model predicts correctly and consistently (high confidence, low
+- **ambiguous** instances whose true class probabilities fluctuate frequently during training (high variability), and are hence ambiguous for the model
+- **easy-to-learn** instances that the model predicts correctly and consistently (high confidence, low
 variability)
-- hard-to-learn instances with low confidence, low variability.
+- **hard-to-learn** instances with low confidence, low variability.
 
 Definitions:
 
